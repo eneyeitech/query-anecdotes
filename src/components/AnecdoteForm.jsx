@@ -9,12 +9,16 @@ const AnecdoteForm = () => {
   const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
     onSuccess: (newAnecdote) => {
-      queryClient.invalidateQueries({ queryKey: ['anecdotes'] })
-      dispatch({ type: 'SET', payload: `anecdote '${newAnecdote.content}' created` })
-      setTimeout(() => {
-        dispatch({ type: 'CLEAR' })
-      }, 5000)
+      const anecdotes = queryClient.getQueryData(['anecdotes'])
+      queryClient.setQueryData(['anecdotes'], anecdotes.concat(newAnecdote))
+      dispatch({ type: 'SET', payload: `anecdote '${newAnecdote.content}' added` })
+      setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
     },
+    onError: (error) => {
+      // handle server validation error here
+      dispatch({ type: 'SET', payload: error.response.data.error || 'anecdote creation failed' })
+      setTimeout(() => dispatch({ type: 'CLEAR' }), 5000)
+    }
   })
 
   const onCreate = (event) => {
@@ -26,7 +30,7 @@ const AnecdoteForm = () => {
 
   return (
     <div>
-      <h2>create new</h2>
+      <h3>create new</h3>
       <form onSubmit={onCreate}>
         <input name="anecdote" />
         <button type="submit">create</button>
